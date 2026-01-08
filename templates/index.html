@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Management System</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🏪 Product Management System</h1>
+        
+        <div class="flex-container">
+            <div class="card">
+                <h2>📦 Create Product</h2>
+                <p>Create new products with auto-generated subvariants.</p>
+                <a href="/create"><button>Go to Create</button></a>
+            </div>
+            
+            <div class="card">
+                <h2>📋 Product List</h2>
+                <p>View all products and their stock levels.</p>
+                <a href="/list"><button>View Products</button></a>
+            </div>
+            
+            <div class="card">
+                <h2>📊 Stock Management</h2>
+                <p>Add or remove stock from subvariants.</p>
+                <a href="/stock"><button>Manage Stock</button></a>
+            </div>
+            
+            <div class="card">
+                <h2>📈 Stock Report</h2>
+                <p>View all stock transactions history.</p>
+                <a href="/report"><button>View Report</button></a>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #e8f4f8; border-radius: 10px;">
+            <h3>📊 Quick Stats</h3>
+            <div id="quickStats">Loading...</div>
+        </div>
+    </div>
+    
+    <script>
+        const API = "http://localhost:8080";
+        
+        // Load quick stats - Fixed version
+        function loadQuickStats() {
+            fetch(API + "/products?page=1&limit=1000")
+                .then(res => res.json())
+                .then(result => {
+                    // Get products array from response
+                    const products = result.products || [];
+                    const totalProducts = products.length;
+                    const totalStock = products.reduce((sum, p) => sum + (parseFloat(p.total_stock) || 0), 0);
+                    
+                    document.getElementById("quickStats").innerHTML = `
+                        <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                            <div>
+                                <h4>Total Products</h4>
+                                <p style="font-size: 24px; font-weight: bold; color: #4CAF50;">${totalProducts}</p>
+                            </div>
+                            <div>
+                                <h4>Total Stock</h4>
+                                <p style="font-size: 24px; font-weight: bold; color: #2196F3;">${totalStock}</p>
+                            </div>
+                            <div>
+                                <h4>Active Products</h4>
+                                <p style="font-size: 24px; font-weight: bold; color: #FF9800;">${products.filter(p => p.active).length}</p>
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch(err => {
+                    document.getElementById("quickStats").innerHTML = 
+                        `<div class="error">Error loading stats: ${err.message}</div>`;
+                });
+        }
+        
+        // Load stats on page load
+        document.addEventListener('DOMContentLoaded', loadQuickStats);
+    </script>
+</body>
+</html>

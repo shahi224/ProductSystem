@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Stock Management</h2>
+        <a href="/" style="float:right;">🏠 Home</a>
+        
+        <div class="card" style="margin: 20px 0;">
+            <h3>Stock Entry</h3>
+            
+            <div class="form-group">
+                <label>SubVariant ID:</label>
+                <input id="subid" placeholder="SubVariant ID" style="width: 100%;">
+            </div>
+            
+            <div class="form-group">
+                <label>Quantity:</label>
+                <input id="qty" type="number" placeholder="Quantity" style="width: 100%;">
+            </div>
+            
+            <div>
+                <button onclick="stockIn()" style="background: green;">Stock IN</button>
+                <button onclick="stockOut()" style="background: #f44336;">Stock OUT</button>
+            </div>
+            
+            <div id="msg" style="margin-top: 15px;"></div>
+        </div>
+        
+        <div class="card">
+            <h3>Recent SubVariants</h3>
+            <div id="subvariantList" style="margin: 15px 0;">
+                Loading subvariants...
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API = "http://localhost:8080";
+        
+        // Load recent subvariants
+        function loadSubVariants() {
+            fetch(API + "/subvariants/all")
+                .then(res => res.json())
+                .then(data => {
+                    const div = document.getElementById("subvariantList");
+                    div.innerHTML = "";
+                    
+                    if (!data.subvariants || data.subvariants.length === 0) {
+                        div.innerHTML = "<p>No subvariants found</p>";
+                        return;
+                    }
+                    
+                    // Take only recent 10
+                    const recent = data.subvariants.slice(0, 10);
+                    
+                    recent.forEach(sv => {
+                        div.innerHTML += `
+                            <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>
+                                        <strong>${sv.product_name} - ${sv.sku}</strong><br>
+                                        <small>Stock: ${sv.stock} | ID: ${sv.id}</small>
+                                    </div>
+                                    <button onclick="useSubVariant('${sv.id}')" 
+                                            style="padding: 5px 10px; font-size: 12px;">
+                                        Use
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error("Error loading subvariants:", err);
+                    document.getElementById("subvariantList").innerHTML = 
+                        `<p class="error">Error loading subvariants</p>`;
+                });
+        }
+        
+        function useSubVariant(subVariantId) {
+            document.getElementById("subid").value = subVariantId;
+            document.getElementById("qty").focus();
+        }
+        
+        // Stock functions
+        function stockIn() {
+            stockAction("/stock/in");
+        }
+        
+        function stockOut() {
+            stockAction("/stock/out");
+        }
+        
+        function stockAction(url) {
+            const subId = document.getElementById("subid").value;
+            const qty = parseFloat(document.getElementById("qty").value);
+            
+            if (!subId || !qty || qty <= 0) {
+                alert("Please enter valid SubVariant ID and Quantity!");
+                return;
+            }
+            
+            const data = {
+                sub_variant_id: subId,
+                qty: qty
+            };
+            
+            fetch(API + url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(result => {
+                document.getElementById("msg").innerHTML = 
+                    `<div class="success">${result.message || result.error}</div>`;
+                
+                // Clear quantity
+                document.getElementById("qty").value = "";
+                
+                // Reload subvariants to update stock
+                loadSubVariants();
+            })
+            .catch(err => {
+                document.getElementById("msg").innerHTML = 
+                    `<div class="error">Error: ${err.message}</div>`;
+            });
+        }
+        
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadSubVariants);
+    </script>
+</body>
+</html>

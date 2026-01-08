@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product List</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Product List</h1>
+        <a href="/" style="float:right;">🏠 Home</a>
+        
+        <div class="card" style="margin: 20px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0;">All Products</h2>
+                <div>
+                    <a href="/create">
+                        <button style="background: #4CAF50;">➕ Add Product</button>
+                    </a>
+                </div>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="searchInput" 
+                           placeholder="🔍 Search by name, code or HSN..." 
+                           style="flex: 1; padding: 12px;"
+                           onkeyup="if(event.key === 'Enter') searchProducts()">
+                    <button onclick="searchProducts()">Search</button>
+                    <button onclick="clearSearch()">Clear</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="stats"></div>
+        
+        <div class="card">
+            <ul id="list" style="min-height: 400px;">
+                <li style="text-align: center; padding: 40px; color: #999;">
+                    Loading products...
+                </li>
+            </ul>
+            
+            <div id="pagination"></div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #666;">
+            <p>📊 Showing 10 products per page</p>
+        </div>
+    </div>
+    
+    <script src="/static/app.js"></script>
+</body>
+</html>

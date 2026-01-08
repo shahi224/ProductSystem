@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Report</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Stock Report</h2>
+        <a href="/" style="float:right;">🏠 Home</a>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="loadReport()">🔄 Refresh</button>
+            <button onclick="testReport()">🧪 Test</button>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Product Code</th>
+                        <th>SubVariant</th>
+                        <th>Qty</th>
+                        <th>Type</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="report">
+                    <tr><td colspan="6" style="text-align:center;padding:20px;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="/static/app.js"></script>
+    <script>
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReport();
+        });
+        
+        // Simple working loadReport function
+        function loadReport() {
+            fetch(API + "/stock/report")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("API Response:", data);
+                    
+                    const tbody = document.getElementById("report");
+                    tbody.innerHTML = "";
+                    
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;">No transactions found</td></tr>`;
+                        return;
+                    }
+                    
+                    // Check the structure of first item
+                    if (data.length > 0) {
+                        console.log("First item keys:", Object.keys(data[0]));
+                        console.log("First item:", data[0]);
+                    }
+                    
+                    data.forEach(item => {
+                        // Try different possible field names
+                        const productName = item.product_name || item.ProductName || 'N/A';
+                        const productCode = item.product_code || item.ProductCode || 'N/A';
+                        const subVariant = item.sub_variant_id || item.SubVariantID || 'N/A';
+                        const quantity = item.quantity || item.Quantity || 0;
+                        const type = item.transaction_type || item.TransactionType || 'N/A';
+                        
+                        // Parse date
+                        let dateStr = 'N/A';
+                        const dateValue = item.transaction_date || item.TransactionDate;
+                        if (dateValue) {
+                            try {
+                                const date = new Date(dateValue);
+                                if (!isNaN(date.getTime())) {
+                                    dateStr = date.toLocaleString();
+                                }
+                            } catch(e) {
+                                console.log("Date parsing error:", e);
+                            }
+                        }
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${productName}</td>
+                                <td>${productCode}</td>
+                                <td><small>${subVariant}</small></td>
+                                <td class="${type === 'IN' ? 'in' : 'out'}">${type === 'IN' ? '+' : '-'}${quantity}</td>
+                                <td>${type}</td>
+                                <td>${dateStr}</td>
+                            </tr>`;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById("report").innerHTML = `
+                        <tr><td colspan="6" class="error">
+                            ❌ Error loading report: ${error.message}<br>
+                            <small>Check console for details</small>
+                        </td></tr>`;
+                });
+        }
+        
+        function testReport() {
+            // Test with sample data
+            const sampleData = [
+                {
+                    product_name: "Test Product 1",
+                    product_code: "TEST-001",
+                    sub_variant_id: "SUB-TEST-001",
+                    quantity: 50,
+                    transaction_type: "IN",
+                    transaction_date: new Date().toISOString()
+                },
+                {
+                    product_name: "Test Product 2",
+                    product_code: "TEST-002",
+                    sub_variant_id: "SUB-TEST-002",
+                    quantity: 25,
+                    transaction_type: "OUT",
+                    transaction_date: new Date().toISOString()
+                }
+            ];
+            
+            const tbody = document.getElementById("report");
+            tbody.innerHTML = "";
+            
+            sampleData.forEach(item => {
+                const date = new Date(item.transaction_date);
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.product_name}</td>
+                        <td>${item.product_code}</td>
+                        <td>${item.sub_variant_id}</td>
+                        <td class="${item.transaction_type === 'IN' ? 'in' : 'out'}">
+                            ${item.transaction_type === 'IN' ? '+' : '-'}${item.quantity}
+                        </td>
+                        <td>${item.transaction_type}</td>
+                        <td>${date.toLocaleString()}</td>
+                    </tr>`;
+            });
+        }
+    </script>
+</body>
+</html>
